@@ -20,6 +20,8 @@ V5 (Kraken):
 {'slug': 'PowerfulEnergeticSnoodSwiftRage', 'tracking_id': '565563033', 'url': 'https://clips.twitch.tv/PowerfulEnergeticSnoodSwiftRage?tt_medium=clips_api&tt_content=url', 'embed_url': 'https://clips.twitch.tv/embed?clip=PowerfulEnergeticSnoodSwiftRage&tt_medium=clips_api&tt_content=embed', 'embed_html': "<iframe src='https://clips.twitch.tv/embed?clip=PowerfulEnergeticSnoodSwiftRage&tt_medium=clips_api&tt_content=embed' width='640' height='360' frameborder='0' scrolling='no' allowfullscreen='true'></iframe>", 'broadcaster': {'id': '98742675', 'name': 'blackufa', 'display_name': 'BlackUFA', 'channel_url': 'https://www.twitch.tv/blackufa', 'logo': 'https://static-cdn.jtvnw.net/jtv_user_pictures/765f4978b39deed4-profile_image-150x150.jpeg'}, 'curator': {'id': '79366217', 'name': 'albatros128', 'display_name': 'Albatros128', 'channel_url': 'https://www.twitch.tv/albatros128', 'logo': 'https://static-cdn.jtvnw.net/jtv_user_pictures/9ef2d314-e295-4034-9ab7-611570e5d78a-profile_image-150x150.png'}, 'vod': {'id': '505944491', 'url': 'https://www.twitch.tv/videos/505944491?t=2h38m36s', 'offset': 9516, 'preview_image_url': 'https://vod-secure.twitch.tv/_404/404_processing_320x240.png'}, 'broadcast_id': '144049985', 'game': 'Death Stranding', 'language': 'ru', 'title': 'Слышь, гранату отдал!', 'views': 1, 'duration': 28, 'created_at': '2019-11-09T13:38:17Z', 'thumbnails': {'medium': 'https://clips-media-assets2.twitch.tv/144049985-offset-9540-preview-480x272.jpg', 'small': 'https://clips-media-assets2.twitch.tv/144049985-offset-9540-preview-260x147.jpg', 'tiny': 'https://clips-media-assets2.twitch.tv/144049985-offset-9540-preview-86x45.jpg'}}
 В Кракене нельзя передать время за какое выдать клипы, и указать одновременно канал и игру
 Подробнее тут: https://dev.twitch.tv/docs/v5/reference/clips#get-top-clips
+
+PS с клипами плохой вариант, очень много повторов
 ----
 Vers New (Helix):
 запрос: https://api.twitch.tv/helix/clips?id={clipslug}
@@ -35,7 +37,7 @@ Vers New (Helix):
 
 * обработать смайл zululDrums чтобы не попадал в выборку
 Если в одном моменте больше 8-ми (?) сообщений, то закрывающее время берём не последнего сообщения, а предпоследнего (наверняка последнее сообщение поставил чел с большой задержкой на стриме)
-* Не брать во внимание первый момент - проверить (почти всегда там какая-то фигня ещё до начала стрима)
+* Не брать во внимание самый первый момент стрима - проверить (почти всегда там какая-то фигня ещё до начала стрима)
 
 === заметки от 16.11.2019 ===
 
