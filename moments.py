@@ -35,37 +35,6 @@ def WriteConfigFile(startSeg, addDurStart, lastSeg, addDurLast, momentCount, low
         f.write(f'{momentCount}: {startSeg}(+{addDurStart}sec) - {lastSeg}(+{addDurLast}sec){lp}\n')
 
 
-def WriteBATFile(startSeg, startOffset, lastSeg, endOffset, momentCount):
-    '''Пишем BAT-файл для FFMPEG'''
-    # --- TODO: Обработать вариант если файл ОДИН !!!
-    firstPartFilename = f'{momentCount}_part_First_{startSeg}.ts'
-    lastPartFilename = f'{momentCount}_part_Last_{lastSeg}.ts'
-    outputFilename = f'moment_{momentCount}_505944491.mp4'
-    cmdFirstSegment = f'ffmpeg -ss {addDurStart} -i {startSeg}.ts -c copy -bsf:v h264_mp4toannexb -f mpegts {firstPartFilename} -n\n'
-    cmdLastSegment = f'ffmpeg -i {lastSeg}.ts -t {endOffset} -c copy -bsf:v h264_mp4toannexb -f mpegts {lastPartFilename} -n\n'
-    cmdConcateTemplate = 'ffmpeg -i "concat:{0}" -c copy -bsf:a aac_adtstoasc {1} -n\n'
-    concatFiles = ''
-
-    fBat = join(folderToSaveTS, '505944491', 'create_moments_505944491.bat')
-    with open(fBat, 'a') as bat:
-        bat.write(cmdFirstSegment)
-        c = 0
-        # промежуточные сегменты
-        for i in range(startSeg + 1, lastSeg):  # первый и посл. не берём
-            c += 1
-            segmentFile = f'{momentCount}_part_{c}_{i}.ts'
-            bat.write(f'ffmpeg -i {i}.ts -c copy -bsf:v h264_mp4toannexb -f mpegts {segmentFile} -n\n')
-            concatFiles += '|' + segmentFile
-        bat.write(cmdLastSegment)
-        concatFiles = firstPartFilename + concatFiles + '|' + lastPartFilename
-        bat.write(cmdConcateTemplate.format(concatFiles, outputFilename))
-        bat.write('\n')
-
-
-def WriteBATFileLowPrior():
-    pass
-
-
 def find_all(finding_str, s):
     # print(f'ищем {finding_str} в {s}')
     occurences_count = 0
@@ -262,7 +231,7 @@ RAG:{ragesmiles_count_rating}*0.5; MLG:{MLGsmiles_count}*0.75;\n\
         #     pass
         #     # WriteBATFileLowPrior()
         # else:
-        WriteBATFile(startSegNumber, addDurStart, lastSegNumber, addDurLast, momentCount)
+        # WriteBATFile(startSegNumber, addDurStart, lastSegNumber, addDurLast, momentCount)
 
         if momentCount % 10 == 0:
             print(f'{momentCount / 579 * 100}%..')
