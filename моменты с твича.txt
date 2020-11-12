@@ -1,0 +1,155 @@
+ID Артура = 98742675
+game_id (DS) = 494364
+
+ 1. берем момент
+2. берем время от начала моменты минус 1 минута (вроде идеально = 11 сек), до последнего LUL +1 секунда
+* Если в одном моменте больше 8-ми (?) сообщений, то закрывающее время берём не последнего сообщения, а предпоследнего (наверняка последнее сообщение поставил чел с большой задержкой на стриме)
+3. время вырезаем из ролика:
+ 3.1 берем плейлист
+ 3.2 идем по сегментам, там написано их время, высчитываем начальный фрагмент и конечный.
+ 3.3 скачиваем эти сегменты
+ 3.4 склеиваем
+
+* еще есть вариант:
+1. брать момент с _moments.txt,
+2. проверять клипы - есть ли время этого момента в клипах, и потом качать клип, ну или ts-сегменты
+3. Не брать во внимание клип, если у него название стрима и длительность 30 секунд 
+GetClip
+V5 (Kraken):
+запрос: https://api.twitch.tv/kraken/clips/{clipslug}
+{'slug': 'PowerfulEnergeticSnoodSwiftRage', 'tracking_id': '565563033', 'url': 'https://clips.twitch.tv/PowerfulEnergeticSnoodSwiftRage?tt_medium=clips_api&tt_content=url', 'embed_url': 'https://clips.twitch.tv/embed?clip=PowerfulEnergeticSnoodSwiftRage&tt_medium=clips_api&tt_content=embed', 'embed_html': "<iframe src='https://clips.twitch.tv/embed?clip=PowerfulEnergeticSnoodSwiftRage&tt_medium=clips_api&tt_content=embed' width='640' height='360' frameborder='0' scrolling='no' allowfullscreen='true'></iframe>", 'broadcaster': {'id': '98742675', 'name': 'blackufa', 'display_name': 'BlackUFA', 'channel_url': 'https://www.twitch.tv/blackufa', 'logo': 'https://static-cdn.jtvnw.net/jtv_user_pictures/765f4978b39deed4-profile_image-150x150.jpeg'}, 'curator': {'id': '79366217', 'name': 'albatros128', 'display_name': 'Albatros128', 'channel_url': 'https://www.twitch.tv/albatros128', 'logo': 'https://static-cdn.jtvnw.net/jtv_user_pictures/9ef2d314-e295-4034-9ab7-611570e5d78a-profile_image-150x150.png'}, 'vod': {'id': '505944491', 'url': 'https://www.twitch.tv/videos/505944491?t=2h38m36s', 'offset': 9516, 'preview_image_url': 'https://vod-secure.twitch.tv/_404/404_processing_320x240.png'}, 'broadcast_id': '144049985', 'game': 'Death Stranding', 'language': 'ru', 'title': 'Слышь, гранату отдал!', 'views': 1, 'duration': 28, 'created_at': '2019-11-09T13:38:17Z', 'thumbnails': {'medium': 'https://clips-media-assets2.twitch.tv/144049985-offset-9540-preview-480x272.jpg', 'small': 'https://clips-media-assets2.twitch.tv/144049985-offset-9540-preview-260x147.jpg', 'tiny': 'https://clips-media-assets2.twitch.tv/144049985-offset-9540-preview-86x45.jpg'}}
+В Кракене нельзя передать время за какое выдать клипы, и указать одновременно канал и игру
+Подробнее тут: https://dev.twitch.tv/docs/v5/reference/clips#get-top-clips
+----
+Vers New (Helix):
+запрос: https://api.twitch.tv/helix/clips?id={clipslug}
+{'data': [{'id': 'PowerfulEnergeticSnoodSwiftRage', 'url': 'https://clips.twitch.tv/PowerfulEnergeticSnoodSwiftRage', 'embed_url': 'https://clips.twitch.tv/embed?clip=PowerfulEnergeticSnoodSwiftRage', 'broadcaster_id': '98742675', 'broadcaster_name': 'BlackUFA', 'creator_id': '79366217', 'creator_name': 'Albatros128', 'video_id': '505944491', 'game_id': '494364', 'language': 'ru', 'title': 'Слышь, гранату отдал!', 'view_count': 1, 'created_at': '2019-11-09T13:38:17Z', 'thumbnail_url': 'https://clips-media-assets2.twitch.tv/144049985-offset-9540-preview-480x272.jpg'}], 'pagination': {}}
+В Helix'е можно детальней указать время, но также нельзя указать одновременно канал и игру
+Решение:
+1. Через Helix получаем список клипы по Артуру, за период с начала того стрима, по сегодня
+2. Получаем список, фильтруем если игра клипов не нужная нам.
+
+================
+
+переделать в сохранении чата: брать разницу в моментах не 7 секнуд, а 9-10 (ну или 15)
+
+* обработать смайл zululDrums чтобы не попадал в выборку
+Если в одном моменте больше 8-ми (?) сообщений, то закрывающее время берём не последнего сообщения, а предпоследнего (наверняка последнее сообщение поставил чел с большой задержкой на стриме)
+* Не брать во внимание первый момент - проверить (почти всегда там какая-то фигня ещё до начала стрима)
+
+=== заметки от 16.11.2019 ===
+
+* Убрать babyRage, BSURage и прчоие Rage (наверно) Или придумать, если их много в одном месте - то оставить
+* смайлы класса Pog (Pog, PogChamp, PagChomp) проверять: если их 3 штуки (3 смайла, а не 3 сообщения) за весь момент, то в топку.
+* Добавить ещё 0.5-1 секунду к последнему сегменту (всего +1.5 - +2 сек к посл.сегменту)
+* GetChat - сделать время разделения моментов (secondsToSplitMoments) 15 секунд (а не 11 как щас)
+* поддержку докачки (файлов) и продолжения с того момента: при ошибках и прочей фигне запоминать момент.
+Потому что даже с пропуском скачивания файлов это все равно выполняется долго
+
+* виды эмоций:
+- МЛЖ, seemsGood
+- Rage
+- Pog
+- смех
+
+* GetChat - писать после номера момента знак минус "-" если момент не очень. ИЛИ после строк сообщений писать строку с минусом
+Что такое "момент не очень": это когда подсчитаем кол-во повторений смайлов одной категории
+Например: (момент, где Артур донес груз и говорит "Чат, хватит после каджого этого-самого говорить 'Грузчик-грузчи, парень работящий'" и смеётся):
+"139 
+02:15:11 (+115) Devifos: SeemsGood
+02:15:13 (+2) HateMan: Pog
+02:15:15 (+2) JmixM: МЛГ
+02:15:15 (+0) komradpunch: bufaMLG bufaMLG
+02:15:26 (+11) Serditka: МЛЖ"
+считаем смайлы "Pog'и" - 1, СимсГуд - 1, МЛЖ - 4 (или 3 если считать сообщ, тут надо подумать)
+после обработки получится (т.к. узконаправленные эмоции берём во внимание только когда смайлов этой эмоции МНОГО (решить сколько):
+"139
+02:15:15 (+2) JmixM: МЛГ
+02:15:15 (+0) komradpunch: bufaMLG bufaMLG
+02:15:26 (+11) Serditka: МЛЖ"
+Тогда уже воочию видно, что такой момент попадает под "низкоприоритетные".
+
+* если только 1 сообщение с МЛЖ-смайлами (даже если их 4), то момент тоже "не ахти"
+Т.к. бывают накладки типа:
+"140
+02:15:46 (+20) Tr0yz: bufaMLG bufaMLG bufaMLG bufaMLG
+02:15:54 (+8) YuraDaim: KEKWLUL
+02:16:00 (+6) Belochek: KEKWLUL"
+Тут МЛЖ - это про то, что Артур получил рейитнг S
+и ещё 2 КекЛула про слова "грузчик, грузчик, парент работящий", а 2 это мало, поэтому момент-ерунда.
+
+"141
+02:16:41 (+41) HateMan: Pog
+02:16:42 (+1) perrrrkele: PogChamp
+02:16:44 (+2) tiger_mafia_zulu: Pog
+02:16:45 (+1) Daredo_: Pog
+02:16:46 (+1) yarnys: Pog"
+Дали Боласган... Момент ни о чём. => 5 погчампов = мало для норм.момента?
+
+"142
+02:17:00 (+14) Roorm: Pog"
+Это тоже относится к 141-му, следовательно => брать 15 секунд в GetChat для разделения моментов:
+
+* Добавить смайл FeelsGreatMan - к смеху
+
+* Разобраться с REGEXP, а то там какая-то ерунда
+
+=== * ИДЕЯ * ===
+Выводить текст чата))) в пр.ниж.углу
+https://stackoverflow.com/questions/17623676/text-on-video-ffmpeg
+Use the drawtext video filter in ffmpeg:
+ffmpeg -i input.mp4 -vf drawtext="fontfile=/path/to/font.ttf: \
+text='Stack Overflow': fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: \
+boxborderw=5: x=(w-text_w)/2: y=(h-text_h)/2" -codec:a copy output.mp4
+ ИЛИ
+ffmpeg -y -i original.mp4 -vf subtitles=text.ass original_with_subs.mp4
+https://github.com/Erkaman/ffmpeg-add-text-to-video-tutorial
+
+=================
+!!! СДЕЛАТЬ ОБРАБОТКУ МОМЕНТОВ ПРЯМИКОМ ИЗ ФАЙЛА ЧАТА, потому что скоро записи удалятся, а логику распознавания моментов я до сих пор редактирую. Файлы чатов надо скачать заранее.
+
+* Добаить HahaBall OMEGAROLL в смешные смайлы
+
+
+-
+38
+00:41:35 (+14) tiger_mafia_zulu: OMEGALUL
+00:41:36 (+1) speakingfox: млж
+00:41:38 (+2) avtomaton: SeemsGood SeemsGood SeemsGood SeemsGood SeemsGood
+00:41:39 (+1) Daredo_: OMEGALUL
+00:41:45 (+6) XsizR: KEKW
+00:41:46 (+1) J_Bandit: WutFace LUL
+00:41:47 (+1) Cyrpedon: OMEGALUL
+00:41:56 (+9) Andrewhous: :D
+здесь: 6 смайлов смеха (LUL, KEKW, :D) на 8 сообщений, коэфф = 0,75 смайлов/сообщение,
+6 смайлов МЛЖ (млж, SeemsGood) на 8 сообщений
+1 WutFace на 8 = 0,125.
+ВСЕ коэффициенты низкие => не берем момент.
+
+168
+02:51:15 (+190) TheDrHax: WutFace
+02:51:18 (+3) mercanie1: WutFace WutFace WutFace
+02:51:19 (+1) KhakiSnake: WutFace WutFace WutFace
+02:51:19 (+0) kovarnisimbiot: KEKWLUL
+02:51:19 (+0) Eduardo3187: WutFace
+02:51:20 (+1) KoRyaZHMa: WutFace
+02:51:21 (+1) time___flies: ахаххахаххах
+02:51:21 (+0) dan_sai: DansGame
+02:51:22 (+1) absurd909: BSURage
+02:51:24 (+2) Snezhulka: BSULUL
+02:51:24 (+0) vlastelinacoltsovna: WutFace WutFace WutFace WutFace
+02:51:24 (+0) black_fat_fox: LUL
+02:51:26 (+2) time___flies: ахаххахахаха
+02:51:27 (+1) SalmySenpai: WutFace
+02:51:27 (+0) zeitgeistxxl: WutFace
+02:51:29 (+2) Tosinda: WutFace
+02:51:29 (+0) draco__malfoy__: WutFace
+02:51:31 (+2) doggy_knight: WutFace WutFace WutFace WutFace
+02:51:32 (+1) time___flies: ахахахахахаххахахаха
+02:51:37 (+5) time___flies: аххахахахаххахаххххахахах
+WutFace, DansGame, BSURage = 23 на 20(13) сообщений: 1,15
+KEKWLUL(1), ахах(4), лул(2) = 7 на 20(7): 0,35
+1,15 + 0,35 = 1,5
++20 = 21,5
+или 23/13 = 1,7692;  7/7 = 1  ++= 2,7692   +20 = 22,7692
+

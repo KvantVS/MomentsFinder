@@ -1,0 +1,98 @@
+ffmpeg 
+-start_at_zero 
+-copyts 
+-ss 00:02 
+-i "2.ts" 
+-i "3.ts" 
+-t 4 
+-i "4.ts" 
+-c copy 
+OutFile.mp4
+
+ffmpeg -start_at_zero -copyts -ss 00:02 -i "2.ts" -i "3.ts" -t 4 -i "4.ts" -c copy OutFile.mp4
+-------------------
+
+фильтр: "[in_line_1]фильтр=параметры_через_':'_вида_КЛЮЧ=ЗНАЧЕНИЕ(или_просто_ЗНАЧЕНИЕ:ЗНАЧЕНИЕ:ЗНАЧЕНИЕ),фильтр2=...;" - это всё одна цепочка_фильтров. Цепочки разделяются ';'
+В начале указывается [входная линия] в формате [inputN:поток], например [0:v]
+В конце указывается псевдоним преобразованного фильтрами потока, просто текст, который вы потом вставите в последний filterchain. Например [v0] или [myFilterFromVideo0].
+Параметры разделяются ":"
+
+[0:v]trim=start=2:end=4:duration=2[v0], - фильтр1 "трим" (просто для примера)
+filter2... - через запятую фильтр2
+
+--------------
+
+= Пример фильтров =
+ffmpeg -i 480.mp4 -i 640.mp4 -filter_complex \
+"[0:v]scale=640:480:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2[v0]; \
+ [v0][0:a][1:v][1:a]concat=n=2:v=1:a=1[v][a]" \
+-map "[v]" -map "[a]" -c:v libx264 -c:a aac -movflags +faststart output.mp4
+------------------
+
+= нужный фильтр: "atrim" и "trim" =
+https://ffmpeg.org/ffmpeg-filters.html#toc-atrim
+https://ffmpeg.org/ffmpeg-filters.html#toc-trim
+
+Опции:
+start
+ Timestamp (in seconds) of the start of the section to keep. I.e. the audio sample with the timestamp start will be the first sample in the output.
+end
+ Specify time of the first audio sample that will be dropped, i.e. the audio sample immediately preceding the one with the timestamp end will be the last sample in the output.
+start_pts
+ Same as start, except this option sets the start timestamp in samples instead of seconds.
+end_pts
+ Same as end, except this option sets the end timestamp in samples instead of seconds.
+duration
+ The maximum duration of the output in seconds.
+start_sample
+ The number of the first sample that should be output.
+end_sample
+ The number of the first sample that should be dropped.
+------------------
+
+ffmpeg -i "2.ts" -i "3.ts" -i "4.ts" -c copy OutFile.mp4
+-filter_complex 
+"[0:a]atrim=start=2[a0],[0:v]trim=start=2[v0];
+[2:a]atrim=start=0:end=4[a2],[2:v]trim=start=0:end=4[v2];
+[a0][v0][1:0][1:1][a2][v2]concat=n=3:v=1:a=1[a][v]"
+-map "[v]" -map "[a]" -c copy output.mp4
+
+->
+
+ffmpeg -i "2.ts" -i "3.ts" -i "4.ts" -filter_complex "[0:a]atrim=start=2[a0],[0:v]trim=start=2[v0];[2:a]atrim=start=0:end=4[a2],[2:v]trim=start=0:end=4[v2];[v0][a0][1:v][1:a][v2][a2]concat=n=3:v=1:a=1[v][a]" -map "[v]" -map "[a]" output.mp4
+(можно добавить  -c:v libx264 -c:a aac, но на выходе то же самое)
+
+====================================
+
+ВОБЩЕМ, есть 3 варианта:
+
+1.
+ffmpeg -i "2.ts" -i "3.ts" -i "4.ts" -filter_complex "[0:a]atrim=start=2[a0],[0:v]trim=start=2[v0];[2:a]atrim=start=0:end=4[a2],[2:v]trim=start=0:end=4[v2];[v0][a0][1:v][1:a][v2][a2]concat=n=3:v=1:a=1[v][a]" -map "[v]" -map "[a]" output.mp4
+
+Минусы: 
+- с ростом кол-ва .ts-файлов в моменте командная строка станет огромной)
+- долго выполняется, (примерно x0.5 скорость от длительности видео), т.к. идёт перекодирование
+- плохое качество (? проверить)
+
+Плюсы:
++ Малый размер (22 секунды = 6.5 МБ)
+-----
+
+2. НЕ РАБОТАЕТ
+ffmpeg -i "concat:2.ts|3.ts|4.ts" -filter_complex "[0:a]atrim=start=2[a0],[0:v]trim=start=2[v0];[2:a]atrim=start=0:end=4[a2],[2:v]trim=start=0:end=4[v2];[v0][a0][1:v][1:a][v2][a2]concat=n=3:v=1:a=1[v][a]" -map "[v]" -map "[a]" output_concat_I_ts.mp4
+-----
+
+3. 
+ffmpeg -ss 02 -i 2.ts -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate1.ts
+ffmpeg -i 3.ts -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate2.ts
+ffmpeg -i 4.ts -t 4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate3.ts
+ffmpeg -i "concat:intermediate1.ts|intermediate2.ts|intermediate3.ts" -c copy -bsf:a aac_adtstoasc outputTSMode.mp4
+
+Минусы:
+- большой размер (22 секунды = 24 МБ)
+
+Плюсы:
++ Высокая скорость преобразования (без перекодировки)
++ Исходное качество (? проверить)
+-----
+

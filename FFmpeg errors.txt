@@ -1,0 +1,4 @@
+error parsing ADTS frame Header
+
+решение: перекодировать все фрагменты сначала в mpegts
+ffmpeg -i input.ts -c copy -bsf:v h264_mp4toannexb -f mpegts output.ts -y
